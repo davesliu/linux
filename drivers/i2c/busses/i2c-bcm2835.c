@@ -336,9 +336,14 @@ static void bcm2835_i2c_start_transfer(struct bcm2835_i2c_dev *i2c_dev)
 	u32 c = BCM2835_I2C_C_ST | BCM2835_I2C_C_I2CEN;
 	struct i2c_msg *msg = i2c_dev->curr_msg;
 	bool last_msg = (i2c_dev->num_msgs == 1);
+	bool is_smbus_block_read = msg->flags & I2C_M_RECV_LEN; 
 
 	if (!i2c_dev->num_msgs)
 		return;
+
+	if (is_smbus_block_read) {
+		msg->len = I2C_SMBUS_BLOCK_MAX + 1; 
+	}
 
 	i2c_dev->num_msgs--;
 	i2c_dev->msg_buf = msg->buf;
@@ -370,7 +375,7 @@ static void bcm2835_i2c_finish_transfer(struct bcm2835_i2c_dev *i2c_dev)
 /*
  * Note about I2C_C_CLEAR on error:
  * The I2C_C_CLEAR on errors will take some time to resolve -- if you were in
- * non-idle state and I2C_C_READ, it sets an abort_rx flag and runs through
+ * non-idle state and I2C_C_READ, it sets an abort_rx flag and runs through 
  * the state machine to send a NACK and a STOP. Since we're setting CLEAR
  * without I2CEN, that NACK will be hanging around queued up for next time
  * we start the engine.
@@ -504,7 +509,7 @@ static int bcm2835_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[],
 
 static u32 bcm2835_i2c_func(struct i2c_adapter *adap)
 {
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_PROTOCOL_MANGLING;
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL_ALL | I2C_FUNC_PROTOCOL_MANGLING; 
 }
 
 static const struct i2c_algorithm bcm2835_i2c_algo = {
@@ -530,7 +535,7 @@ static int bcm2835_i2c_probe(struct platform_device *pdev)
 	struct clk *mclk;
 	u32 bus_clk_rate;
 
-	i2c_dev = devm_kzalloc(&pdev->dev, sizeof(*i2c_dev), GFP_KERNEL);
+	i2c_dev = devm_kzalloc(&pdev->dev, sizeof(*i2c_dev), GFP_KERNEL); 
 	if (!i2c_dev)
 		return -ENOMEM;
 	platform_set_drvdata(pdev, i2c_dev);
