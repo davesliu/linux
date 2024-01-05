@@ -94,7 +94,7 @@ static inline void bcm2835_debug_add(struct bcm2835_i2c_dev *i2c_dev, u32 s)
 	if (!i2c_dev->debug_num_msgs || i2c_dev->debug_num >= BCM2835_DEBUG_MAX)
 		return;
 
-	i2c_dev->debug[i2c_dev->debug_num].msg = i2c_dev->curr_msg;
+	i2c_dev->debug[i2c_dev->debug_num].msg = i2c_dev->curr_msg; 
 	i2c_dev->debug[i2c_dev->debug_num].msg_idx =
 				i2c_dev->debug_num_msgs - i2c_dev->num_msgs;
 	i2c_dev->debug[i2c_dev->debug_num].remain = i2c_dev->msg_buf_remaining;
@@ -277,7 +277,7 @@ static struct clk *bcm2835_i2c_register_div(struct device *dev,
 	init.num_parents = 1;
 	init.flags = 0;
 
-	priv = devm_kzalloc(dev, sizeof(struct clk_bcm2835_i2c), GFP_KERNEL);
+	priv = devm_kzalloc(dev, sizeof(struct clk_bcm2835_i2c), GFP_KERNEL); 
 	if (priv == NULL)
 		return ERR_PTR(-ENOMEM);
 
@@ -336,13 +336,18 @@ static void bcm2835_i2c_start_transfer(struct bcm2835_i2c_dev *i2c_dev)
 	u32 c = BCM2835_I2C_C_ST | BCM2835_I2C_C_I2CEN;
 	struct i2c_msg *msg = i2c_dev->curr_msg;
 	bool last_msg = (i2c_dev->num_msgs == 1);
+	bool is_smbus_block_read = msg->flags & I2C_M_RECV_LEN; 
 
 	if (!i2c_dev->num_msgs)
 		return;
 
+	if (is_smbus_block_read) {  
+		msg->len = I2C_SMBUS_BLOCK_MAX + 1;
+	}
+
 	i2c_dev->num_msgs--;
 	i2c_dev->msg_buf = msg->buf;
-	i2c_dev->msg_buf_remaining = msg->len;
+	i2c_dev->msg_buf_remaining = msg->len; 
 
 	if (msg->flags & I2C_M_RD)
 		c |= BCM2835_I2C_C_READ | BCM2835_I2C_C_INTR;
